@@ -7,6 +7,8 @@ const RootStack = createStackNavigator(
   {
     user: {
       screen: Home,
+
+      navigationOptions: {headerShown: false},
     },
     Details: {
       screen: Details,

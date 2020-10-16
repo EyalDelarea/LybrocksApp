@@ -13,19 +13,21 @@ import {
   Text,
   Button,
 } from 'react-native';
-import {ListItem, SearchBar, Badge, Avatar,Card} from 'react-native-elements';
+import {ListItem, SearchBar, Badge, Avatar, Card} from 'react-native-elements';
 import firestore from '@react-native-firebase/firestore';
+import {fetchDatabase} from '../../../redux/app-redux';
+import {connect} from 'react-redux';
 
 class List extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      firestore: [],
+      fireDatabase: this.props.fireDatabase,
       error: null,
       query: '',
       searchFlag: false,
-      loading: true,
+      loading: false,
     };
 
     this.applyStatusStyle = this.applyStatusStyle.bind(this);
@@ -34,28 +36,11 @@ class List extends Component {
     this.refresh = this.refresh.bind(this);
     this.calTimePassed = this.calTimePassed.bind(this);
     this.deleteItem = this.deleteItem.bind(this);
-    this.getFireBaseDB = this.getFireBaseDB.bind(this);
   }
-  componentDidMount() {
-    this.getFireBaseDB();
-  }
-
-  getFireBaseDB = async () => {
-    await firestore()
-      .collection('Orders')
-      .where('status', 'in', ['On the way', 'Waiting approval'])
-      .get()
-      .catch((error) => console.log(' ERROR ' + error))
-      .then((snapshot) =>
-        this.setState({
-          loading: false,
-          firestore: snapshot.docs,
-        }),
-      );
-  };
 
   refresh() {
-    this.getFireBaseDB();
+    //TODO SET STATE TO LOADING IN REDUX
+    this.props.fetchDatabase();
     console.log('DB has been refreshed');
   }
 
@@ -123,7 +108,7 @@ class List extends Component {
     //If the text is empty refresh the list
     if (text === '') {
       this.setState({
-        firestore: this.props.firebaseDB,
+        firestore: this.props.fireDatabase,
       });
     } else {
       //insert to newData the filtered items
@@ -167,6 +152,7 @@ class List extends Component {
    * Deletes an item from the DB
    * @param item
    */
+  //TODO MOVE TO REDUX
   deleteItem = (item) => {
     const path = item._ref._documentPath._parts[1];
     firestore()
@@ -176,7 +162,6 @@ class List extends Component {
       .then(() => {
         console.log('User deleted!');
       });
-    this.refresh();
   };
   render() {
     /**
@@ -196,52 +181,54 @@ class List extends Component {
     return (
       <>
         <FlatList
-          data={this.state.firestore}
+          data={this.props.fireDatabase._docs}
           renderItem={({item}) => {
-            return (
-              <TouchableOpacity onPress={() => this._onPress(item)}>
-                <Swipeable
-                  renderRightActions={() => (
-                    <Button
-                      title={'Delete'}
-                      color={'red'}
-                      onPress={() => this.deleteItem(item)}
-                    />
-                  )}>
-                  <ListItem>
-                    <Avatar title={item._data.customerName[0]} />
-                    <ListItem.Content>
-                      <ListItem.Title>
-                        {item._data.customerName[0]}{' '}
-                      </ListItem.Title>
-                      <ListItem.Subtitle>
-                        {item._data.address[0]}
-                      </ListItem.Subtitle>
-                      <Badge
-                        value={item._data.status}
-                        status={this.applyStatusStyle(item._data.status)}
-                        containerStyle={{
-                          position: 'absolute',
-                          top: -4,
-                          right: -4,
-                        }}
+            if (item._data.status !== 'Arrived') {
+              return (
+                <TouchableOpacity onPress={() => this._onPress(item)}>
+                  <Swipeable
+                    renderRightActions={() => (
+                      <Button
+                        title={'Delete'}
+                        color={'red'}
+                        onPress={() => this.deleteItem(item)}
                       />
-                      <ListItem.Subtitle>
-                        {item._data.cash ? 'Cash' : 'Credit'}
-                      </ListItem.Subtitle>
-                      <ListItem.Subtitle>
-                        {item._data.totalCost + ' ₪ '}
-                      </ListItem.Subtitle>
-                      <ListItem.Subtitle>
-                        {this.calTimePassed(item)}
-                      </ListItem.Subtitle>
+                    )}>
+                    <ListItem>
+                      <Avatar title={item._data.customerName[0]} />
+                      <ListItem.Content>
+                        <ListItem.Title>
+                          {item._data.customerName[0]}{' '}
+                        </ListItem.Title>
+                        <ListItem.Subtitle>
+                          {item._data.address[0]}
+                        </ListItem.Subtitle>
+                        <Badge
+                          value={item._data.status}
+                          status={this.applyStatusStyle(item._data.status)}
+                          containerStyle={{
+                            position: 'absolute',
+                            top: -4,
+                            right: -4,
+                          }}
+                        />
+                        <ListItem.Subtitle>
+                          {item._data.cash ? 'Cash' : 'Credit'}
+                        </ListItem.Subtitle>
+                        <ListItem.Subtitle>
+                          {item._data.totalCost + ' ₪ '}
+                        </ListItem.Subtitle>
+                        <ListItem.Subtitle>
+                          {this.calTimePassed(item)}
+                        </ListItem.Subtitle>
 
-                      <ListItem.Subtitle />
-                    </ListItem.Content>
-                  </ListItem>
-                </Swipeable>
-              </TouchableOpacity>
-            );
+                        <ListItem.Subtitle />
+                      </ListItem.Content>
+                    </ListItem>
+                  </Swipeable>
+                </TouchableOpacity>
+              );
+            }
           }}
           keyExtractor={(item) => item.id}
           ItemSeparatorComponent={this.renderSeparator}
@@ -262,4 +249,18 @@ const styles = StyleSheet.create({
   },
 });
 
-export default List;
+const mapStateToProps = (state) => {
+  return {
+    fireDatabase: state.fireDatabase,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    fetchDatabase: () => {
+      dispatch(fetchDatabase());
+    },
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(List);

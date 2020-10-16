@@ -6,8 +6,8 @@ import Details from './Details';
 const RootStack = createStackNavigator(
   {
     Active_Orders: {
-      title: 'Active Orders',
       screen: List,
+      navigationOptions: {headerShown: false},
     },
     Details: {
       screen: Details,

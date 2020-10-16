@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {Component} from 'react';
-
+import {connect} from 'react-redux';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import moment from 'moment';
 import {
@@ -14,15 +14,15 @@ import {
   Button,
 } from 'react-native';
 import {ListItem, Badge, Avatar, Card} from 'react-native-elements';
+import {fetchDatabase, store} from '../../../redux/app-redux';
 
 export class Home extends Component {
-  state = {};
-
   constructor(props) {
     super(props);
+
     this.state = {
-      loading: true,
-      fireDataBase: [],
+      loading: this.props.loading,
+      fireDatabase: this.props.fireDatabase,
     };
     this.applyStatusStyle = this.applyStatusStyle.bind(this);
   }
@@ -48,53 +48,56 @@ export class Home extends Component {
     return (
       <>
         <Card>
-          <Card.Title>Hello user</Card.Title>
+          <Card.Title>
+            {this.state.fireDatabase._docs[0]._data.customerName}
+          </Card.Title>
           <Card.Divider />
-          <Text>This is your summery:</Text>
-          <Text>Total completed : deliverys</Text>
         </Card>
         <Card>
           <Card.Title>History</Card.Title>
           <Card.Divider />
           <FlatList
-            data={this.props.db}
+            //TODO FIX NAVIGATION TO DETAILS SCREEN
+            data={this.props.fireDatabase._docs}
             renderItem={({item}) => {
-              return (
-                <TouchableOpacity onPress={() => this._onPress(item)}>
-                  <Swipeable
-                    renderRightActions={() => (
-                      <Button
-                        title={'Delete'}
-                        color={'red'}
-                        onPress={() => this.deleteItem(item)}
-                      />
-                    )}>
-                    <ListItem>
-                      <Avatar title={item._data.customerName[0]} />
-                      <ListItem.Content>
-                        <ListItem.Title>
-                          {item._data.customerName[0]}{' '}
-                        </ListItem.Title>
+              if (item._data.status === 'Arrived') {
+                return (
+                  <TouchableOpacity onPress={() => this._onPress(item)}>
+                    <Swipeable
+                      renderRightActions={() => (
+                        <Button
+                          title={'Delete'}
+                          color={'red'}
+                          onPress={() => this.deleteItem(item)}
+                        />
+                      )}>
+                      <ListItem>
+                        <Avatar title={item._data.customerName[0]} />
+                        <ListItem.Content>
+                          <ListItem.Title>
+                            {item._data.customerName[0]}{' '}
+                          </ListItem.Title>
 
-                        <ListItem.Subtitle>
-                          {item._data.totalCost + ' ₪ '}
-                        </ListItem.Subtitle>
-                        <ListItem.Subtitle>
-                          <Badge
-                            value={item._data.status}
-                            status={this.applyStatusStyle(item._data.status)}
-                            containerStyle={{
-                              position: 'absolute',
-                              top: -4,
-                              right: -4,
-                            }}
-                          />
-                        </ListItem.Subtitle>
-                      </ListItem.Content>
-                    </ListItem>
-                  </Swipeable>
-                </TouchableOpacity>
-              );
+                          <ListItem.Subtitle>
+                            {item._data.totalCost + ' ₪ '}
+                          </ListItem.Subtitle>
+                          <ListItem.Subtitle>
+                            <Badge
+                              value={item._data.status}
+                              status={this.applyStatusStyle(item._data.status)}
+                              containerStyle={{
+                                position: 'absolute',
+                                top: -4,
+                                right: -4,
+                              }}
+                            />
+                          </ListItem.Subtitle>
+                        </ListItem.Content>
+                      </ListItem>
+                    </Swipeable>
+                  </TouchableOpacity>
+                );
+              }
             }}
             keyExtractor={(item) => item.id}
             ItemSeparatorComponent={this.renderSeparator}
@@ -109,4 +112,11 @@ export class Home extends Component {
   }
 }
 
-export default Home;
+const mapStateToProps = (state) => {
+  return {
+    fireDatabase: state.fireDatabase,
+    loading: state.loading,
+  };
+};
+
+export default connect(mapStateToProps)(Home);

@@ -10,9 +10,7 @@ import {
 
 import {Text, StyleSheet, View} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
-// import {createOrder} from '../../store/actions/firestoreActions';
-// import {connect} from 'react-redux';
-
+import {fetchDatabase} from '../../redux/app-redux';
 class NewOrder extends Component {
   constructor() {
     super();
@@ -95,6 +93,7 @@ class NewOrder extends Component {
    * Submits the form and clear the screen
    */
   submitForm() {
+    //TODO move to redux action
     firestore()
       .collection('Orders')
       .add({
@@ -123,8 +122,6 @@ class NewOrder extends Component {
       cash: false,
       selectedIndex: '',
     });
-
-    this.props.notifyDBChange();
   }
 
   render() {

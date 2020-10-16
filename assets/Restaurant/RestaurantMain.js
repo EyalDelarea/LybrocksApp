@@ -4,81 +4,46 @@ import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-import firestore from '@react-native-firebase/firestore';
 import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
 
 import NewOrder from './NewOrder';
 import HomeContainer from './Home/HomeContainer';
 import ActiveOrderScreen from './ActiveOrders/ActiveOrderScreen';
-
-
-
-
+import {fetchDatabase} from '../../redux/app-redux';
+import {connect} from 'react-redux';
 const Tab = createMaterialBottomTabNavigator();
 
-export default class RestaurantMain extends Component {
-  constructor() {
-    super();
-    this.state = {
-      fireDataBase: [],
-      loading: false,
-    };
-    this.getFullFireDataBase = this.getFullFireDataBase.bind(this);
+class RestaurantMain extends Component {
+  constructor(props) {
+    super(props);
+
     this.calActiveOrdersLength = this.calActiveOrdersLength.bind(this);
-    this.updateDB = this.updateDB.bind(this);
-  }
-
-  componentDidMount() {
-    this.getFullFireDataBase();
-  }
-
-  /**
-   * Requesting the firebase database from 'Orders' collection
-   * filter (using .where) only delivery status 'on the way' and 'waiting for approval'
-   * and then updates the state
-   * @returns {Promise<void>}
-   */
-  getFullFireDataBase = async () => {
-    await firestore()
-      .collection('Orders')
-      .where('status', 'in', ['Arrived'])
-      .get()
-      .catch((error) => console.log(' ERROR ' + error))
-      .then((snapshot) =>
-        this.setState({
-          loading: false,
-          fireDataBase: snapshot.docs,
-        }),
-      );
-
-    console.log('DB has been fetched');
+    this.props.fetchDatabase();
     this.calActiveOrdersLength();
-  };
-
-  updateDB() {
-    this.getFullFireDataBase();
-    console.log('DB has been update!');
   }
+
   calActiveOrdersLength = () => {
     let count = 0;
-    const db = this.state.fireDataBase;
 
-    for (let i = 0; i < db.length; i++) {
-      if (
-        db[i]._data.status === 'Arrived' ||
-        db[i]._data.status === 'On The Way'
-      ) {
-        count++;
+    const db = this.props.fireDatabase._docs;
+    if (db !== undefined) {
+      for (let i = 0; i < db.length; i++) {
+
+        if (
+          db[i]._data.status === 'Waiting approval' ||
+          db[i]._data.status === 'On the way'
+        ) {
+          count++;
+        }
       }
     }
     return count;
   };
 
   render() {
-    if (this.state.loading) {
+    if (this.props.loading) {
       return (
         <>
-          <Text>aa {this.state.fireDataBase}</Text>
           <ActivityIndicator size="large" color="#00ff00" />
         </>
       );
@@ -89,24 +54,11 @@ export default class RestaurantMain extends Component {
             activeColor="#f0edf6"
             inactiveColor="#3e2465"
             initialRouteName="Home">
-            <Tab.Screen
-              name={'Home'}
-              children={() => <HomeContainer db={this.state.fireDataBase} />}
-            />
-            <Tab.Screen
-              name={'New'}
-              children={() => (
-                <NewOrder
-                  db={this.state.fireDataBase}
-                  notifyDBChange={this.updateDB}
-                />
-              )}
-            />
+            <Tab.Screen name={'Home'} children={() => <HomeContainer />} />
+            <Tab.Screen name={'New'} children={() => <NewOrder />} />
             <Tab.Screen
               name="ActiveOrders"
-              children={() => (
-                <ActiveOrderScreen db={this.state.fireDataBase} />
-              )}
+              children={() => <ActiveOrderScreen />}
               options={{
                 tabBarLabel: 'Active Orders',
                 tabBarIcon: ({color, size}) => (
@@ -125,3 +77,20 @@ export default class RestaurantMain extends Component {
     }
   }
 }
+
+const mapStateToProps = (state) => {
+  return {
+    fireDatabase: state.fireDatabase,
+    loading: state.loading,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    fetchDatabase: () => {
+      dispatch(fetchDatabase());
+    },
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(RestaurantMain);

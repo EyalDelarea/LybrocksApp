@@ -16,6 +16,7 @@
     "@react-navigation/bottom-tabs": "^5.9.2",
     "@react-navigation/material-bottom-tabs": "^5.2.19",
     "@react-navigation/native": "^5.7.6",
+    "firebase": "^7.23.0",
     "moment": "^2.29.1",
     "react": "16.13.1",
     "react-native": "0.63.3",
@@ -44,6 +45,7 @@
     "jest": "^26.5.3",
     "metro-react-native-babel-preset": "^0.63.0",
     "prettier-eslint": "^11.0.0",
+    "react-devtools": "^4.8.2",
     "react-test-renderer": "16.13.1"
   },
   "jest": {

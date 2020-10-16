@@ -2,9 +2,6 @@ import 'react-native-gesture-handler';
 import React, {Component} from 'react';
 import {Text} from 'react-native';
 import RestaurantMain from './Restaurant/RestaurantMain';
-import {createStore} from 'redux';
-
-const store = createStore();
 
 export default class App extends Component {
   constructor() {
